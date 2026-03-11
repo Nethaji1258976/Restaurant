@@ -51,6 +51,14 @@ app.post("/api/login", async (req, res) => {
   res.json({ message: "Login successful", token });
 });
 
+// 👉 New route to fetch all registered users
+app.get("/api/users", (req, res) => {
+  let users = readFile("users.json");
+  // Hide password hashes before sending
+  const safeUsers = users.map(u => ({ username: u.username }));
+  res.json(safeUsers);
+});
+
 // Middleware to protect routes
 function auth(req, res, next) {
   const header = req.headers["authorization"];
