@@ -1,1 +1,39 @@
-[]
+const express = require('express');
+const fs = require('fs');
+const app = express();
+
+app.use(express.json()); // to parse JSON body
+
+// Register route
+app.post('/register', (req, res) => {
+  const newUser = req.body;
+
+  // Read existing users
+  fs.readFile('users.json', 'utf8', (err, data) => {
+    if (err) return res.status(500).send('Error reading file');
+
+    let users = [];
+    if (data) {
+      users = JSON.parse(data); // parse existing array
+    }
+
+    users.push(newUser); // add new user
+
+    // Write back to file
+    fs.writeFile('users.json', JSON.stringify(users, null, 2), (err) => {
+      if (err) return res.status(500).send('Error writing file');
+      res.status(201).json({ message: 'User registered successfully', user: newUser });
+    });
+  });
+});
+
+// Route to check all users
+app.get('/users', (req, res) => {
+  fs.readFile('users.json', 'utf8', (err, data) => {
+    if (err) return res.status(500).send('Error reading file');
+    const users = data ? JSON.parse(data) : [];
+    res.json(users);
+  });
+});
+
+app.listen(3000, () => console.log('Server running at http://localhost:3000'));
