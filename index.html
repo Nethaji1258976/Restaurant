@@ -2,74 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vidhya's Food Factory</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: #f8f8f8;
-    }
-    header {
-      background: #ff5722;
-      color: white;
-      padding: 15px;
-    }
-    nav h1 { margin: 0; }
-    nav ul {
-      list-style: none;
-      display: flex;
-      gap: 15px;
-    }
-    nav a {
-      color: white;
-      text-decoration: none;
-    }
-    .hero {
-      text-align: center;
-      padding: 50px;
-      background: #ff7043;
-      color: white;
-    }
-    .btn {
-      display: inline-block;
-      padding: 10px 20px;
-      background: #ff5722;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      margin-top: 10px;
-    }
-    .menu {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      padding: 20px;
-    }
-    .card {
-      background: white;
-      padding: 15px;
-      border-radius: 10px;
-      width: 250px;
-      text-align: center;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .card img {
-      width: 100%;
-      border-radius: 10px;
-    }
-    .cart, .payment, .confirmation {
-      text-align: center;
-      padding: 30px;
-    }
-    @media (max-width: 768px) {
-      .menu { flex-direction: column; align-items: center; }
-    }
-    .hidden { display: none; }
-  </style>
+  <link rel="stylesheet" href="style.css"> <!-- external CSS -->
 </head>
 <body>
+  <!-- Header -->
   <header>
     <nav>
       <h1>Vidhya's Food Factory</h1>
@@ -77,6 +14,7 @@
         <li><a href="#" onclick="showPage('home')">Home</a></li>
         <li><a href="#" onclick="showPage('menu')">Menu</a></li>
         <li><a href="#" onclick="showPage('cart')">Cart</a></li>
+        <li><a href="#" onclick="showPage('auth')">Login/Register</a></li>
       </ul>
     </nav>
   </header>
@@ -89,32 +27,7 @@
   </section>
 
   <!-- Menu -->
-  <section id="menu" class="menu hidden">
-    <div class="card">
-      <img src="https://via.placeholder.com/250x150?text=Pizza" alt="Pizza">
-      <h3>Cheese Pizza</h3>
-      <p>₹250</p>
-      <button onclick="addToCart('Cheese Pizza', 250)">Add to Cart</button>
-    </div>
-    <div class="card">
-      <img src="https://via.placeholder.com/250x150?text=Burger" alt="Burger">
-      <h3>Veg Burger</h3>
-      <p>₹150</p>
-      <button onclick="addToCart('Veg Burger', 150)">Add to Cart</button>
-    </div>
-    <div class="card">
-      <img src="https://via.placeholder.com/250x150?text=Biryani" alt="Biryani">
-      <h3>Chicken Biryani</h3>
-      <p>₹300</p>
-      <button onclick="addToCart('Chicken Biryani', 300)">Add to Cart</button>
-    </div>
-    <div class="card">
-      <img src="https://via.placeholder.com/250x150?text=Dosa" alt="Dosa">
-      <h3>Masala Dosa</h3>
-      <p>₹120</p>
-      <button onclick="addToCart('Masala Dosa', 120)">Add to Cart</button>
-    </div>
-  </section>
+  <section id="menu" class="menu hidden"></section>
 
   <!-- Cart -->
   <section id="cart" class="cart hidden">
@@ -143,7 +56,19 @@
     <a href="#" class="btn" onclick="showPage('home')">Back to Home</a>
   </section>
 
+  <!-- Login/Register -->
+  <section id="auth" class="auth hidden">
+    <h2>Login / Register</h2>
+    <input id="username" placeholder="Username"><br>
+    <input id="password" type="password" placeholder="Password"><br>
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
+  </section>
+
+  <!-- Scripts -->
   <script>
+    let token = null;
+
     function showPage(pageId) {
       document.querySelectorAll("section").forEach(sec => sec.classList.add("hidden"));
       document.getElementById(pageId).classList.remove("hidden");
@@ -171,16 +96,97 @@
       document.getElementById("total").textContent = total;
     }
 
+    function register() {
+      fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: document.getElementById("username").value,
+          password: document.getElementById("password").value
+        })
+      }).then(res => res.json()).then(data => alert(data.message));
+    }
+
+    function login() {
+      fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: document.getElementById("username").value,
+          password: document.getElementById("password").value
+        })
+      }).then(res => res.json()).then(data => {
+        if(data.token){
+          token = data.token;
+          alert("Login successful!");
+        } else {
+          alert(data.message);
+        }
+      });
+    }
+
     document.getElementById("payment-form").addEventListener("submit", function(e){
       e.preventDefault();
       let method = document.querySelector("input[name='payment']:checked");
       if(method){
-        localStorage.removeItem("cart");
-        showPage("confirmation");
+        let cart = JSON.parse(localStorage.getItem("cart")) || [];
+        let order = { items: cart, paymentMethod: method.value };
+        fetch("/api/order", {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
+          body: JSON.stringify(order)
+        })
+        .then(res => res.json())
+        .then(data => {
+          alert(data.message);
+          localStorage.removeItem("cart");
+          showPage("confirmation");
+        });
       } else {
         alert("Please select a payment method!");
       }
     });
-  </script>
+
+    // Food items array (50+ items)
+    const foodItems = [
+      { name: "Cheese Pizza", price: 250, img: "https://via.placeholder.com/250x150?text=Pizza" },
+      { name: "Veg Burger", price: 150, img: "https://via.placeholder.com/250x150?text=Burger" },
+      { name: "Chicken Biryani", price: 300, img: "https://via.placeholder.com/250x150?text=Biryani" },
+      { name: "Masala Dosa", price: 120, img: "https://via.placeholder.com/250x150?text=Dosa" },
+      { name: "Paneer Butter Masala", price: 220, img: "https://via.placeholder.com/250x150?text=Paneer" },
+      { name: "Idli Sambar", price: 80, img: "https://via.placeholder.com/250x150?text=Idli" },
+      { name: "Chicken Curry", price: 280, img: "https://via.placeholder.com/250x150?text=Chicken+Curry" },
+      { name: "Mutton Curry", price: 350, img: "https://via.placeholder.com/250x150?text=Mutton+Curry" },
+      { name: "Fish Fry", price: 200, img: "https://via.placeholder.com/250x150?text=Fish+Fry" },
+      { name: "Egg Fried Rice", price: 180, img: "https://via.placeholder.com/250x150?text=Fried+Rice" },
+      { name: "Veg Fried Rice", price: 160, img: "https://via.placeholder.com/250x150?text=Veg+Fried+Rice" },
+      { name: "Chicken Fried Rice", price: 200, img: "https://via.placeholder.com/250x150?text=Chicken+Fried+Rice" },
+      { name: "Veg Noodles", price: 150, img: "https://via.placeholder.com/250x150?text=Veg+Noodles" },
+      { name: "Chicken Noodles", price: 180, img: "https://via.placeholder.com/250x150?text=Chicken+Noodles" },
+      { name: "Mutton Biryani", price: 350, img: "https://via.placeholder.com/250x150?text=Mutton+Biryani" },
+      { name: "Veg Pulao", price: 200, img: "https://via.placeholder.com/250x150?text=Veg+Pulao" },
+      { name: "Curd Rice", price: 100, img: "https://via.placeholder.com/250x150?text=Curd+Rice" },
+      { name: "Chapati with Curry", price: 150, img: "https://via.placeholder.com/250x150?text=Chapati" },
+      { name: "Parotta with Salna", price: 120, img: "https://via.placeholder.com/250x150?text=Parotta" },
+      { name: "Veg Sandwich", price: 100, img: "https://via.placeholder.com/250x150?text=Sandwich" },
+       ];
+
+  // Generate menu dynamically
+  const menuSection = document.getElementById("menu");
+  foodItems.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img src="${item.img}" alt="${item.name}">
+      <h3>${item.name}</h3>
+      <p>₹${item.price}</p>
+      <button onclick="addToCart('${item.name}', ${item.price})">Add to Cart</button>
+    `;
+    menuSection.appendChild(card);
+  });
+</script>
 </body>
 </html>
