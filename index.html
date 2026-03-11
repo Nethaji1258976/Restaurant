@@ -149,6 +149,40 @@
         alert("Please select a payment method!");
       }
     });
+    
+function register() {
+  console.log("Register button clicked"); // Debugging
+
+  fetch("http://localhost:3000/api/register", {   // ✅ Full URL to backend
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: document.getElementById("username").value,
+      password: document.getElementById("password").value
+    })
+  })
+  .then(res => res.json())
+  .then(data => alert(data.message))
+  .catch(err => console.error("Error:", err));
+}
+
+function login() {
+  console.log("Login button clicked"); // Debugging
+
+  fetch("http://localhost:3000/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username: document.getElementById("username").value,
+      password: document.getElementById("password").value
+    })
+  })
+  .then(res => res.json())
+  .then(data => alert(data.message))
+  .catch(err => console.error("Error:", err));
+}
+
+
 
     // Food items array (50+ items)
     const foodItems = [
@@ -187,6 +221,8 @@
     `;
     menuSection.appendChild(card);
   });
+    
 </script>
 </body>
+
 </html>
