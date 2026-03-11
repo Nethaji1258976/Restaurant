@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vidhya's Food Factory</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f8f8f8;
+    }
+    header {
+      background: #ff5722;
+      color: white;
+      padding: 15px;
+    }
+    nav h1 { margin: 0; }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 15px;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+    }
+    .hero {
+      text-align: center;
+      padding: 50px;
+      background: #ff7043;
+      color: white;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #ff5722;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    .menu {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+    }
+    .card {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      width: 250px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .card img {
+      width: 100%;
+      border-radius: 10px;
+    }
+    .cart, .payment, .confirmation {
+      text-align: center;
+      padding: 30px;
+    }
+    @media (max-width: 768px) {
+      .menu { flex-direction: column; align-items: center; }
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <h1>Vidhya's Food Factory</h1>
+      <ul>
+        <li><a href="#" onclick="showPage('home')">Home</a></li>
+        <li><a href="#" onclick="showPage('menu')">Menu</a></li>
+        <li><a href="#" onclick="showPage('cart')">Cart</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Home -->
+  <section id="home" class="hero">
+    <h2>Delicious Food, Delivered Fast</h2>
+    <p>Order your favorite meals with ease!</p>
+    <a href="#" class="btn" onclick="showPage('menu')">Order Now</a>
+  </section>
+
+  <!-- Menu -->
+  <section id="menu" class="menu hidden">
+    <div class="card">
+      <img src="https://via.placeholder.com/250x150?text=Pizza" alt="Pizza">
+      <h3>Cheese Pizza</h3>
+      <p>₹250</p>
+      <button onclick="addToCart('Cheese Pizza', 250)">Add to Cart</button>
+    </div>
+    <div class="card">
+      <img src="https://via.placeholder.com/250x150?text=Burger" alt="Burger">
+      <h3>Veg Burger</h3>
+      <p>₹150</p>
+      <button onclick="addToCart('Veg Burger', 150)">Add to Cart</button>
+    </div>
+    <div class="card">
+      <img src="https://via.placeholder.com/250x150?text=Biryani" alt="Biryani">
+      <h3>Chicken Biryani</h3>
+      <p>₹300</p>
+      <button onclick="addToCart('Chicken Biryani', 300)">Add to Cart</button>
+    </div>
+    <div class="card">
+      <img src="https://via.placeholder.com/250x150?text=Dosa" alt="Dosa">
+      <h3>Masala Dosa</h3>
+      <p>₹120</p>
+      <button onclick="addToCart('Masala Dosa', 120)">Add to Cart</button>
+    </div>
+  </section>
+
+  <!-- Cart -->
+  <section id="cart" class="cart hidden">
+    <h2>Your Cart</h2>
+    <ul id="cart-items"></ul>
+    <h3>Total: ₹<span id="total">0</span></h3>
+    <a href="#" class="btn" onclick="showPage('payment')">Proceed to Payment</a>
+  </section>
+
+  <!-- Payment -->
+  <section id="payment" class="payment hidden">
+    <h2>Select Payment Method</h2>
+    <form id="payment-form">
+      <label><input type="radio" name="payment" value="GPay"> GPay</label><br>
+      <label><input type="radio" name="payment" value="PhonePe"> PhonePe</label><br>
+      <label><input type="radio" name="payment" value="Card"> Card</label><br>
+      <label><input type="radio" name="payment" value="Cash on Delivery"> Cash on Delivery</label><br>
+      <button type="submit" class="btn">Confirm Payment</button>
+    </form>
+  </section>
+
+  <!-- Confirmation -->
+  <section id="confirmation" class="confirmation hidden">
+    <h2>🎉 Thank you for your order!</h2>
+    <p>Your food will be delivered soon.</p>
+    <a href="#" class="btn" onclick="showPage('home')">Back to Home</a>
+  </section>
+
+  <script>
+    function showPage(pageId) {
+      document.querySelectorAll("section").forEach(sec => sec.classList.add("hidden"));
+      document.getElementById(pageId).classList.remove("hidden");
+      if(pageId === "cart") displayCart();
+    }
+
+    function addToCart(name, price) {
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
+      cart.push({ name, price });
+      localStorage.setItem("cart", JSON.stringify(cart));
+      alert(name + " added to cart!");
+    }
+
+    function displayCart() {
+      let cart = JSON.parse(localStorage.getItem("cart")) || [];
+      let cartItems = document.getElementById("cart-items");
+      let total = 0;
+      cartItems.innerHTML = "";
+      cart.forEach(item => {
+        let li = document.createElement("li");
+        li.textContent = item.name + " - ₹" + item.price;
+        cartItems.appendChild(li);
+        total += item.price;
+      });
+      document.getElementById("total").textContent = total;
+    }
+
+    document.getElementById("payment-form").addEventListener("submit", function(e){
+      e.preventDefault();
+      let method = document.querySelector("input[name='payment']:checked");
+      if(method){
+        localStorage.removeItem("cart");
+        showPage("confirmation");
+      } else {
+        alert("Please select a payment method!");
+      }
+    });
+  </script>
+</body>
+</html>
